@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28218.60
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KubeDmc", "KubeDmc\KubeDmc.csproj", "{FF925E0B-A589-437B-B75E-C5D1A8C0EA23}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FF925E0B-A589-437B-B75E-C5D1A8C0EA23}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FF925E0B-A589-437B-B75E-C5D1A8C0EA23}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FF925E0B-A589-437B-B75E-C5D1A8C0EA23}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FF925E0B-A589-437B-B75E-C5D1A8C0EA23}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {286073CE-441B-4F80-977E-BA2BCBEEA36F}
+	EndGlobalSection
+EndGlobal
