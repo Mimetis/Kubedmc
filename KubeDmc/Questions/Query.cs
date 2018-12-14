@@ -28,7 +28,7 @@ namespace KubeDmc.Questions
         /// </summary>
         public int AnswerCursorLeft { get; set; }
 
-        public List<QueryLine> Choices { get; set; }
+        public List<QueryLine> QueryLines { get; set; }
 
         public QueryLine SelectedChoice { get; set; }
 
@@ -52,10 +52,10 @@ namespace KubeDmc.Questions
 
         public void Initialize()
         {
-            if (this.Choices != null)
-                this.Choices.Clear();
+            if (this.QueryLines != null)
+                this.QueryLines.Clear();
             else
-                this.Choices = new List<QueryLine>();
+                this.QueryLines = new List<QueryLine>();
 
         }
 
@@ -71,28 +71,30 @@ namespace KubeDmc.Questions
 
         }
 
-  
+
         /// <summary>
         /// Create the options we can have (exit, back) and return new top position
         /// </summary>
         public virtual void CreateBackOption()
         {
-            this.Choices.Add(new QueryLine
+            this.QueryLines.Add(new QueryLine
             {
                 ChoiceType = QueryLineType.Back,
                 Question = this,
-                Text = "Back"
+                Text = "Back",
+                HotkeyIndex = 0
             });
 
         }
 
         public virtual void CreateExit()
         {
-            this.Choices.Add(new QueryLine
+            this.QueryLines.Add(new QueryLine
             {
                 ChoiceType = QueryLineType.Exit,
                 Question = this,
-                Text = "Exit"
+                Text = "Exit",
+                HotkeyIndex = 0
             });
         }
 
@@ -113,7 +115,7 @@ namespace KubeDmc.Questions
             foreach (DataColumn c in this.DataTable.Columns)
                 text += c.Caption;
 
-            this.Choices.Add(new QueryLine
+            this.QueryLines.Add(new QueryLine
             {
                 ChoiceType = QueryLineType.Title,
                 Question = this,
@@ -136,7 +138,7 @@ namespace KubeDmc.Questions
             {
                 var text = string.Concat(row.ItemArray);
 
-                this.Choices.Add(new QueryLine
+                this.QueryLines.Add(new QueryLine
                 {
                     ChoiceType = QueryLineType.Choice,
                     Question = this,
@@ -161,11 +163,11 @@ namespace KubeDmc.Questions
         /// </summary>
         public virtual void SetSelectedChoice(QueryLine selectedChoice = null)
         {
-            if (this.Choices == null || this.Choices.Count == 0)
+            if (this.QueryLines == null || this.QueryLines.Count == 0)
                 return;
 
             if (selectedChoice == null)
-                selectedChoice = this.Choices[0];
+                selectedChoice = this.QueryLines[0];
 
             this.SelectedChoice = selectedChoice;
         }

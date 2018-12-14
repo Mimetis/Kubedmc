@@ -8,9 +8,15 @@ namespace KubeDmc
 {
     public class QueryLine
     {
+        
 
         /// <summary>
-        /// Gets or Sets the query title
+        /// Position of the Hotkey for the current line
+        /// </summary>
+        public int HotkeyIndex { get; set; } = -1;
+
+        /// <summary>
+        /// Gets or Sets the query title    
         /// </summary>
         public String Title { get; set; }
 
@@ -38,10 +44,19 @@ namespace KubeDmc
         /// Kind of choice
         /// </summary>
         public string Kind { get; set; }
-         
+
         /// <summary>
         /// Tag ref
         /// </summary>
         public Object Item { get; set; }
+
+
+        public ConsoleKey GetConsoleKey()
+        {
+            if (this.HotkeyIndex >= 0)
+               return Enum.Parse<ConsoleKey>(this.Text.ToUpperInvariant().Substring(this.HotkeyIndex, 1));
+            else
+                return ConsoleKey.NoName;
+        }
     }
 }

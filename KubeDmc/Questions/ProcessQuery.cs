@@ -55,7 +55,7 @@ namespace KubeDmc.Questions
                         text = ex.Message;
                     }
 
-                    this.Choices.Add(new QueryLine
+                    this.QueryLines.Add(new QueryLine
                     {
                         ChoiceType = QueryLineType.PlainText,
                         Question = this,

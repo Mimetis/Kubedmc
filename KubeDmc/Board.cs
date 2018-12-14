@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Threading;
 
 namespace KubeDmc
 {
@@ -12,17 +13,14 @@ namespace KubeDmc
         // Contains all queries actually shown on screen
         private readonly Stack<Query> queriesStack = new Stack<Query>();
         private int topPosition = 0;
+        private bool cursorVisibility;
+        private Query currentQuery;
 
         public Board()
         {
             Console.CancelKeyPress += (s, e) => Exit();
-
         }
 
-        private void Console_CancelKeyPress(object sender, ConsoleCancelEventArgs e)
-        {
-
-        }
 
         public void Execute()
         {
@@ -31,6 +29,8 @@ namespace KubeDmc
             {
                 return;
             }
+            // since we change the default value, just remember when application ends
+            this.cursorVisibility = Console.CursorVisible;
 
             Console.CursorVisible = false;
 
@@ -57,10 +57,10 @@ namespace KubeDmc
                 Console.CursorTop = this.topPosition;
 
                 // pick the query to write without removing
-                var query = this.queriesStack.Peek();
+                this.currentQuery = this.queriesStack.Peek();
 
                 // Write root question and choices
-                this.WriteQuery(query);
+                this.WriteQuery();
 
                 // Wait until a choice is been made
                 Query next = null;
@@ -70,15 +70,15 @@ namespace KubeDmc
 
                 while (next == null && !end && !isBack)
                 {
-                    var keyInfo = this.ReadChoice(query);
+                    var keyInfo = this.ReadChoice();
 
                     // Handle response
                     // Get if we have to continue or if we go to next query (then go to next line)
-                    (end, isBack, next) = this.HandleAnswer(query);
+                    (end, isBack, next) = this.HandleAnswer();
                 }
 
                 // clean current query, if it's a back, so clean the title too
-                CleanQuery(query, isBack);
+                CleanQuery(isBack);
 
                 // if isBack, remove the query from the stack
                 if (isBack || next == null)
@@ -90,7 +90,7 @@ namespace KubeDmc
                     // push the next query
                     next.Refresh();
                     // increment top position
-                    next.TopPosition = query.TopPosition + 1;
+                    next.TopPosition = this.currentQuery.TopPosition + 1;
                     // push in the stack
                     this.queriesStack.Push(next);
                 }
@@ -105,68 +105,90 @@ namespace KubeDmc
         {
             while (this.queriesStack.TryPop(out var q) != false)
             {
-                CleanQuery(q, true);
+                this.currentQuery = q;
+                CleanQuery(true);
             }
             Console.CursorTop = this.topPosition;
             Console.CursorLeft = 0;
+            // since we change the default value, just remember when application ends
+            Console.CursorVisible = this.cursorVisibility;
+
+
         }
 
 
         /// <summary>
         /// Let user navigrate through options, and wait an option is choosen
         /// </summary>
-        public ConsoleKeyInfo ReadChoice(Query query)
+        public ConsoleKeyInfo ReadChoice()
         {
             // Current line index
             var keyInfo = new ConsoleKeyInfo();
+            bool isSelected = false;
             do
             {
                 // get the current selected choice, correponding to the selected line
-                Console.CursorTop = query.InProgressChoice.TopPosition;
+                Console.CursorTop = this.currentQuery.InProgressChoice.TopPosition;
                 Console.CursorLeft = 0;
-                var inProgressChoiceIndex = query.Choices.IndexOf(query.InProgressChoice);
+                var inProgressChoiceIndex = this.currentQuery.QueryLines.IndexOf(this.currentQuery.InProgressChoice);
 
                 // Don't display the character on Console
                 keyInfo = Console.ReadKey(true);
 
                 if (keyInfo.Key == ConsoleKey.UpArrow && inProgressChoiceIndex > 0)
                 {
-                    this.WriteQueryLine(query.InProgressChoice, false, query.InProgressChoice.TopPosition);
+                    this.WriteQueryLine(this.currentQuery.InProgressChoice, false, this.currentQuery.InProgressChoice.TopPosition);
                     inProgressChoiceIndex--;
-                    query.InProgressChoice = query.Choices[inProgressChoiceIndex];
-                    this.WriteQueryLine(query.InProgressChoice, true, query.InProgressChoice.TopPosition);
+                    this.currentQuery.InProgressChoice = this.currentQuery.QueryLines[inProgressChoiceIndex];
+                    this.WriteQueryLine(this.currentQuery.InProgressChoice, true, this.currentQuery.InProgressChoice.TopPosition);
                 }
-                if (keyInfo.Key == ConsoleKey.DownArrow && inProgressChoiceIndex < query.Choices.Count - 1)
+                if (keyInfo.Key == ConsoleKey.DownArrow && inProgressChoiceIndex < this.currentQuery.QueryLines.Count - 1)
                 {
-                    this.WriteQueryLine(query.InProgressChoice, false, query.InProgressChoice.TopPosition);
+                    this.WriteQueryLine(this.currentQuery.InProgressChoice, false, this.currentQuery.InProgressChoice.TopPosition);
                     inProgressChoiceIndex++;
-                    query.InProgressChoice = query.Choices[inProgressChoiceIndex];
-                    this.WriteQueryLine(query.InProgressChoice, true, query.InProgressChoice.TopPosition);
+                    this.currentQuery.InProgressChoice = this.currentQuery.QueryLines[inProgressChoiceIndex];
+                    this.WriteQueryLine(this.currentQuery.InProgressChoice, true, this.currentQuery.InProgressChoice.TopPosition);
+                }
+                if ((int)keyInfo.Key >= 65 && (int)keyInfo.Key <= 90)
+                {
+                    var selectedQueryLine = this.currentQuery.QueryLines.FirstOrDefault(q => q.GetConsoleKey() == keyInfo.Key);
+                    if (selectedQueryLine != null)
+                    {
+                        this.WriteQueryLine(this.currentQuery.InProgressChoice, false, this.currentQuery.InProgressChoice.TopPosition);
+                        this.currentQuery.InProgressChoice = selectedQueryLine;
+                        this.WriteQueryLine(this.currentQuery.InProgressChoice, true, this.currentQuery.InProgressChoice.TopPosition);
+                        this.currentQuery.SelectedChoice = this.currentQuery.InProgressChoice;
+                        isSelected = true;
+                        // Just to see the line selected !
+                        //Thread.Sleep(200);
+                    }
+
                 }
                 if (keyInfo.Key == ConsoleKey.Enter)
                 {
-                    query.SelectedChoice = query.InProgressChoice;
+                    this.currentQuery.SelectedChoice = this.currentQuery.InProgressChoice;
+                    isSelected = true;
                 }
                 if (keyInfo.Key == ConsoleKey.Escape)
                 {
-                    query.SelectedChoice = query.Choices.FirstOrDefault(c => c.ChoiceType == QueryLineType.Back);
-                    if (query.SelectedChoice == null)
-                        query.SelectedChoice = query.Choices.FirstOrDefault(c => c.ChoiceType == QueryLineType.Exit);
+                    this.currentQuery.SelectedChoice = this.currentQuery.QueryLines.FirstOrDefault(c => c.ChoiceType == QueryLineType.Back);
+                    if (this.currentQuery.SelectedChoice == null)
+                        this.currentQuery.SelectedChoice = this.currentQuery.QueryLines.FirstOrDefault(c => c.ChoiceType == QueryLineType.Exit);
 
                 }
 
-            } while (keyInfo.Key != ConsoleKey.Escape && keyInfo.Key != ConsoleKey.Enter);
+            } while (keyInfo.Key != ConsoleKey.Escape && !isSelected);
 
             return keyInfo;
         }
 
-        public (bool isEnd, bool isBack, Query nextStep) HandleAnswer(Query question)
+        public (bool isEnd, bool isBack, Query nextStep) HandleAnswer()
         {
-            switch (question.SelectedChoice.ChoiceType)
+            switch (this.currentQuery.SelectedChoice.ChoiceType)
             {
                 case QueryLineType.Choice:
-                    this.WriteAnswer(question);
-                    return (false, false, question.GetNextQuery());
+                    this.WriteAnswer();
+                    return (false, false, this.currentQuery.GetNextQuery());
                 case QueryLineType.Back:
                     return (false, true, null);
                 case QueryLineType.Exit:
@@ -183,20 +205,20 @@ namespace KubeDmc
         /// <summary>
         /// Write the selected choice at the end of the question line
         /// </summary>
-        public void WriteAnswer(Query question)
+        public void WriteAnswer()
         {
             var initialForegroundColor = Console.ForegroundColor;
 
-            Console.CursorLeft = question.AnswerCursorLeft;
-            Console.CursorTop = question.TopPosition;
+            Console.CursorLeft = this.currentQuery.AnswerCursorLeft;
+            Console.CursorTop = this.currentQuery.TopPosition;
 
             ConsoleExt.DeleteEndOfLine();
 
             // replace to the correct position
-            Console.CursorLeft = question.AnswerCursorLeft;
+            Console.CursorLeft = this.currentQuery.AnswerCursorLeft;
 
             Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.Write(question.SelectedChoice.Title);
+            Console.Write(this.currentQuery.SelectedChoice.Title);
 
             Console.ForegroundColor = initialForegroundColor;
 
@@ -213,32 +235,32 @@ namespace KubeDmc
         /// <summary>
         /// Write a full query
         /// </summary>
-        public void WriteQuery(Query query)
+        public void WriteQuery()
         {
             var initialForegroundColor = Console.ForegroundColor;
 
             Console.CursorLeft = 0;
-            Console.CursorTop = query.TopPosition;
+            Console.CursorTop = this.currentQuery.TopPosition;
 
             Console.ForegroundColor = ConsoleColor.Green;
             Console.Write("? ");
             Console.ForegroundColor = initialForegroundColor;
-            Console.Write(query.Title);
+            Console.Write(this.currentQuery.Title);
             Console.Write(": ");
 
-            query.TopPosition = Console.CursorTop;
+            this.currentQuery.TopPosition = Console.CursorTop;
 
             // save current position for answer
-            query.AnswerCursorLeft = Console.CursorLeft;
+            this.currentQuery.AnswerCursorLeft = Console.CursorLeft;
 
-            var titleChoices = query.Choices.Where(c => c.ChoiceType == QueryLineType.Title).FirstOrDefault();
+            var titleChoices = this.currentQuery.QueryLines.Where(c => c.ChoiceType == QueryLineType.Title).FirstOrDefault();
             if (titleChoices != null)
             {
                 this.WriteLine();
                 this.WriteQueryLine(titleChoices, false);
             }
 
-            var choices = query.Choices.Where(c => c.ChoiceType == QueryLineType.Choice).ToList();
+            var choices = this.currentQuery.QueryLines.Where(c => c.ChoiceType == QueryLineType.Choice).ToList();
 
             if (choices != null)
             {
@@ -250,7 +272,7 @@ namespace KubeDmc
 
             }
 
-            var texts = query.Choices.Where(c => c.ChoiceType == QueryLineType.PlainText).ToList();
+            var texts = this.currentQuery.QueryLines.Where(c => c.ChoiceType == QueryLineType.PlainText).ToList();
 
             if (texts != null)
             {
@@ -263,14 +285,14 @@ namespace KubeDmc
             }
 
 
-            var back = query.Choices.Where(c => c.ChoiceType == QueryLineType.Back).FirstOrDefault();
+            var back = this.currentQuery.QueryLines.Where(c => c.ChoiceType == QueryLineType.Back).FirstOrDefault();
             if (back != null)
             {
                 this.WriteLine();
                 this.WriteQueryLine(back, false);
             }
 
-            var exit = query.Choices.Where(c => c.ChoiceType == QueryLineType.Exit).FirstOrDefault();
+            var exit = this.currentQuery.QueryLines.Where(c => c.ChoiceType == QueryLineType.Exit).FirstOrDefault();
             if (exit != null)
             {
                 this.WriteLine();
@@ -278,10 +300,10 @@ namespace KubeDmc
             }
 
             // saving last bottom position
-            query.BottomPosition = Console.CursorTop;
+            this.currentQuery.BottomPosition = Console.CursorTop;
 
             // Select first choice
-            QueryLine inProgressChoice = query.InProgressChoice;
+            QueryLine inProgressChoice = this.currentQuery.InProgressChoice;
 
             if (inProgressChoice == null)
             {
@@ -295,7 +317,7 @@ namespace KubeDmc
 
             // replacing the selected line with same line, but selected (foreground varies)
             this.WriteQueryLine(inProgressChoice, true, inProgressChoice.TopPosition);
-            query.InProgressChoice = inProgressChoice;
+            this.currentQuery.InProgressChoice = inProgressChoice;
         }
 
         /// <summary>
@@ -306,7 +328,7 @@ namespace KubeDmc
 
             var initialForegroundColor = Console.ForegroundColor;
 
-           Console.CursorLeft = 0;
+            Console.CursorLeft = 0;
 
             // if topPosition is set, we are in a "replacing" line mode
             if (topPosition.HasValue)
@@ -331,6 +353,14 @@ namespace KubeDmc
             Console.ForegroundColor = isSelected ? choiceCC : initialForegroundColor;
             Console.Write(queryLine.Text);
 
+            // color hotkey if supported and not selected
+            if (queryLine.HotkeyIndex >= 0 && !isSelected)
+            {
+                Console.ForegroundColor = choiceCC;
+                var letter = queryLine.Text.Substring(queryLine.HotkeyIndex, 1);
+                Console.CursorLeft = queryLine.HotkeyIndex + 2; // +2 for first letters "> "
+                Console.Write(letter);
+            }
 
             Console.ForegroundColor = initialForegroundColor;
             Console.CursorLeft = 0;
@@ -362,14 +392,14 @@ namespace KubeDmc
         /// <summary>
         /// Clean a full query, including or not, the first line
         /// </summary>
-        private void CleanQuery(Query query, bool includeTitle)
+        private void CleanQuery( bool includeTitle)
         {
             // Remember cursor position before cleaning
             (int _top, int _left) = (Console.CursorTop, Console.CursorLeft);
 
-            var fromTop = includeTitle ? query.TopPosition : query.TopPosition + 1;
+            var fromTop = includeTitle ? this.currentQuery.TopPosition : this.currentQuery.TopPosition + 1;
 
-            for (int i = fromTop; i <= query.BottomPosition; i++)
+            for (int i = fromTop; i <= this.currentQuery.BottomPosition; i++)
                 ConsoleExt.DeleteLine(i);
 
             // Replace cursor position
@@ -377,7 +407,7 @@ namespace KubeDmc
 
         }
 
-        
+
 
     }
 }

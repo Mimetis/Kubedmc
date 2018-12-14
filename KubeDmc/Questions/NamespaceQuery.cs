@@ -15,33 +15,27 @@ namespace KubeDmc.Questions
             this.Namespace = ns;
         }
 
-        public override void CreateBackOption()
-        {
-            this.Choices.Add(new QueryLine
-            {
-                ChoiceType = QueryLineType.Back,
-                Question = this,
-                Text = "Back",
-            });
-        }
+
 
         public override void CreateChoices()
         {
-            this.Choices.Add(new QueryLine
+            this.QueryLines.Add(new QueryLine
             {
                 ChoiceType = QueryLineType.Choice,
                 Question = this,
                 Text = $"Get Pods",
                 Title = "Pods",
                 Kind = "pod",
+                HotkeyIndex = 4
             });
-            this.Choices.Add(new QueryLine
+            this.QueryLines.Add(new QueryLine
             {
                 ChoiceType = QueryLineType.Choice,
                 Question = this,
                 Text = $"Get Deployments",
                 Title = "Deployments",
                 Kind = "deployment",
+                HotkeyIndex = 4
             });
             //this.Choices.Add(new QueryLine
             //{
@@ -51,21 +45,23 @@ namespace KubeDmc.Questions
             //    Title = "DaemonSets",
             //    Kind = "daemonset",
             //});
-            this.Choices.Add(new QueryLine
+            this.QueryLines.Add(new QueryLine
             {
                 ChoiceType = QueryLineType.Choice,
                 Question = this,
                 Text = $"Get StatefulSets",
                 Title = "StatefulSets",
                 Kind = "statefulset",
+                HotkeyIndex = 5
             });
-            this.Choices.Add(new QueryLine
+            this.QueryLines.Add(new QueryLine
             {
                 ChoiceType = QueryLineType.Choice,
                 Question = this,
                 Text = $"Get Services",
                 Title = "Services",
                 Kind = "service",
+                HotkeyIndex = 4
             });
 
             //this.Choices.Add(new QueryLine
@@ -92,29 +88,23 @@ namespace KubeDmc.Questions
             //    Title = "Horizontal Pod Autoscaler",
             //    Kind = "hpa",
             //});
-            this.Choices.Add(new QueryLine
+            this.QueryLines.Add(new QueryLine
             {
                 ChoiceType = QueryLineType.Choice,
                 Question = this,
                 Text = $"[Edit]",
                 Title = "Edit",
                 Kind = "edit",
+                HotkeyIndex = 1
             });
-            this.Choices.Add(new QueryLine
-            {
-                ChoiceType = QueryLineType.Choice,
-                Question = this,
-                Text = $"[Describe]",
-                Title = "Describe",
-                Kind = "describe",
-            });
-            this.Choices.Add(new QueryLine
+            this.QueryLines.Add(new QueryLine
             {
                 ChoiceType = QueryLineType.Choice,
                 Question = this,
                 Text = $"[Yaml output]",
                 Title = "Yaml output",
                 Kind = "yaml",
+                HotkeyIndex = 1
             });
         }
 

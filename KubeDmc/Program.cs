@@ -10,6 +10,8 @@ namespace KubeDmc
 
             // https://www.mankier.com/1/kubectl-cluster-info
 
+
+
             new Board().Execute();
 
             Console.WriteLine("Bye !");

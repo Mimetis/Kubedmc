@@ -16,7 +16,7 @@ namespace KubeDmc.Questions
 
         public override void CreateBackOption()
         {
-            this.Choices.Add(new QueryLine
+            this.QueryLines.Add(new QueryLine
             {
                 ChoiceType = QueryLineType.Back,
                 Question = this,
@@ -26,13 +26,14 @@ namespace KubeDmc.Questions
 
         public override void CreateChoices()
         {
-            this.Choices.Add(new QueryLine
+            this.QueryLines.Add(new QueryLine
             {
                 ChoiceType = QueryLineType.Choice,
                 Question = this,
                 Text = $"[Describe]",
                 Title = "Decribe",
                 Kind = "describe",
+                HotkeyIndex = 1
             });
         }
 

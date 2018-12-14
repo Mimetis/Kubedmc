@@ -15,42 +15,36 @@ namespace KubeDmc.Questions
             this.Deployment = deployment;
         }
 
-        public override void CreateBackOption()
-        {
-            this.Choices.Add(new QueryLine
-            {
-                ChoiceType = QueryLineType.Back,
-                Question = this,
-                Text = "Back",
-            });
-        }
 
 
 
         public override void CreateChoices()
         {
-            this.Choices.Add(new QueryLine
+            this.QueryLines.Add(new QueryLine
             {
                 ChoiceType = QueryLineType.Choice,
                 Question = this,
                 Text = $"[Edit]",
                 Title = "Edit",
                 Kind = "edit",
+                HotkeyIndex = 1
             });
-            this.Choices.Add(new QueryLine
+            this.QueryLines.Add(new QueryLine
             {
                 ChoiceType = QueryLineType.Choice,
                 Question = this,
                 Text = $"[Describe]",
                 Kind = "describe",
+                HotkeyIndex = 1
             });
-            this.Choices.Add(new QueryLine
+            this.QueryLines.Add(new QueryLine
             {
                 ChoiceType = QueryLineType.Choice,
                 Question = this,
                 Text = $"[Yaml output]",
                 Title = "Yaml output",
                 Kind = "yaml",
+                HotkeyIndex = 1
             });
 
         }

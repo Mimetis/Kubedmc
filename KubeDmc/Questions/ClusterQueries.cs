@@ -15,37 +15,41 @@ namespace KubeDmc.Questions
 
         public override void CreateChoices()
         {
-            this.Choices.Add(new QueryLine
+            this.QueryLines.Add(new QueryLine
             {
                 ChoiceType = QueryLineType.Choice,
                 Question = this,
-                Text = $"Get Namespaces",
+                Text = $"Get NameSpaces",
                 Title = "Namespaces",
                 Kind = "namespace",
+                HotkeyIndex = 8
             });
-            this.Choices.Add(new QueryLine
+            this.QueryLines.Add(new QueryLine
             {
                 ChoiceType = QueryLineType.Choice,
                 Question = this,
                 Text = $"Get Nodes",
                 Title = "Nodes",
                 Kind = "node",
+                HotkeyIndex = 4
             });
-            this.Choices.Add(new QueryLine
+            this.QueryLines.Add(new QueryLine
             {
                 ChoiceType = QueryLineType.Choice,
                 Question = this,
-                Text = $"Cluster info",
+                Text = $"Cluster Info",
                 Title = "Cluster info",
                 Kind = "clusterinfo",
+                HotkeyIndex = 8
             });
-            this.Choices.Add(new QueryLine
+            this.QueryLines.Add(new QueryLine
             {
                 ChoiceType = QueryLineType.Choice,
                 Question = this,
-                Text = $"Current config",
+                Text = $"Current Config",
                 Title = "Current config",
                 Kind = "currentcontext",
+                HotkeyIndex = 8
             });
 
         }

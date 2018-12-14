@@ -5,7 +5,7 @@
     <Title>kubedmc</Title>
     <TargetFramework>netcoreapp2.1</TargetFramework>
     <Description>A simple .NET Core global tool called "kubedmc". Allows you to run basics command-lines like kubectl, but with one finger only :)</Description>
-    <VersionPrefix>1.0.0</VersionPrefix>
+    <VersionPrefix>1.1.0</VersionPrefix>
     <Authors>Sébastien Pertus</Authors>
     <Product>kubedmc</Product>
     <Copyright>MIT</Copyright>

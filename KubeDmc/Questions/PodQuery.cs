@@ -15,61 +15,57 @@ namespace KubeDmc.Questions
             this.pod = pod;
         }
 
-        public override void CreateBackOption()
-        {
-            this.Choices.Add(new QueryLine
-            {
-                ChoiceType = QueryLineType.Back,
-                Question = this,
-                Text = "Back",
-            });
-        }
 
         public override void CreateChoices()
         {
-            this.Choices.Add(new QueryLine
+            this.QueryLines.Add(new QueryLine
             {
                 ChoiceType = QueryLineType.Choice,
                 Question = this,
                 Text = $"[Logs]",
                 Title = "Logs",
                 Kind = "log",
+                HotkeyIndex = 1
             }
             );
-            this.Choices.Add(new QueryLine
+            this.QueryLines.Add(new QueryLine
             {
                 ChoiceType = QueryLineType.Choice,
                 Question = this,
                 Text = $"[Bash]",
                 Title = "Bash",
                 Kind = "bash",
+                HotkeyIndex = 1
             }
           );
-            this.Choices.Add(new QueryLine
+            this.QueryLines.Add(new QueryLine
             {
                 ChoiceType = QueryLineType.Choice,
                 Question = this,
                 Text = $"[Edit]",
                 Title = "Edit",
                 Kind = "edit",
+                HotkeyIndex = 1
             }
         );
-            this.Choices.Add(new QueryLine
+            this.QueryLines.Add(new QueryLine
             {
                 ChoiceType = QueryLineType.Choice,
                 Question = this,
                 Text = $"[Describe]",
                 Title = "Decribe",
                 Kind = "describe",
+                HotkeyIndex = 1
             }
           );
-            this.Choices.Add(new QueryLine
+            this.QueryLines.Add(new QueryLine
             {
                 ChoiceType = QueryLineType.Choice,
                 Question = this,
                 Text = $"[Yaml output]",
                 Title = "Yaml output",
                 Kind = "yaml",
+                HotkeyIndex = 1
             });
         }
 
