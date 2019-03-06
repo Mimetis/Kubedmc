@@ -37,18 +37,23 @@ namespace KubeDmc.Questions
         /// <summary>
         /// Get the Query Title
         /// </summary>
-        public abstract string Title { get; }
-
-
-
-        public Query()
+        public string Title { get; private set; }
+        public virtual bool IsRefreshedEnabled { get; } = false;
+    
+        public Query(string title = null)
         {
+            this.Title = title;
         }
         /// <summary>
         /// Handle an answer
         /// </summary>
         public abstract Query GetNextQuery();
 
+
+        public virtual void RefreshItems()
+        {
+
+        }
 
         public void Initialize()
         {
@@ -64,10 +69,18 @@ namespace KubeDmc.Questions
         {
             // Fill the query
             this.Initialize();
+
+            this.RefreshItems();
+
+            if (this.Items != null)
+                this.DataTable = GetDataTable(this.Items);
+
             this.CreateChoicesTitle();
             this.CreateChoices();
             this.CreateBackOption();
             this.CreateExit();
+            this.SetSelectedChoice();
+            this.SetInProgressChoice();
 
         }
 
@@ -106,8 +119,6 @@ namespace KubeDmc.Questions
             if (this.Items == null)
                 return;
 
-            this.DataTable = GetDataTable(this.Items);
-
             if (this.DataTable == null || this.DataTable.Columns.Count <= 0)
                 return;
 
@@ -145,7 +156,7 @@ namespace KubeDmc.Questions
                     // Assuming first column is always row name property
                     Title = row[0].ToString(),
                     Text = text,
-                    Item = this.Items.First(i => i.Name.ToLowerInvariant() == row[0].ToString().Trim().ToLowerInvariant())
+                    Item = this.Items.First(i => i.Name.ToLowerInvariant() == row["Name"].ToString().Trim().ToLowerInvariant())
                 });
             }
         }
@@ -161,16 +172,19 @@ namespace KubeDmc.Questions
         /// <summary>
         /// Set the correct choice. If null, set to the correct default one
         /// </summary>
-        public virtual void SetSelectedChoice(QueryLine selectedChoice = null)
+        public virtual void SetSelectedChoice()
         {
-            if (this.QueryLines == null || this.QueryLines.Count == 0)
-                return;
 
-            if (selectedChoice == null)
-                selectedChoice = this.QueryLines[0];
-
-            this.SelectedChoice = selectedChoice;
         }
+
+        /// <summary>
+        /// Set the in progress choice. If null, set to the correct default one
+        /// </summary>
+        public virtual void SetInProgressChoice()
+        {
+
+        }
+
 
         public DataTable GetDataTable(IEnumerable<Item> items)
         {
@@ -231,7 +245,7 @@ namespace KubeDmc.Questions
                     var value = prop.GetValue(item).ToString();
 
                     // compute with correct spaces
-                    value = value + new string(' ', column.MaxLength - value.Length);
+                    value += new string(' ', column.MaxLength - value.Length);
 
                     newRow[prop.Name] = value;
                 }

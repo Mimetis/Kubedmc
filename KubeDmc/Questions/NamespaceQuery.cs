@@ -7,10 +7,7 @@ namespace KubeDmc.Questions
     {
         public string Namespace { get; set; }
 
-        public override string Title => "Choose a ressource";
-
-
-        public NamespaceQuery(string ns)
+        public NamespaceQuery(string ns) : base("Choose a ressource")
         {
             this.Namespace = ns;
         }

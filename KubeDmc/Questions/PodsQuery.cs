@@ -9,15 +9,17 @@ namespace KubeDmc.Questions
     {
 
         public string Namespace { get; set; }
-        public override string Title => "Pods";
 
-        public PodsQuery(string ns)
+        public PodsQuery(string ns) : base("Pods")
         {
             this.Namespace = ns;
-            this.Items = KubService.Current.GetPods(this.Namespace);
         }
 
-
+        public override bool IsRefreshedEnabled => true;
+        public override void RefreshItems()
+        {
+            this.Items = KubService.Current.GetPods(this.Namespace);
+        }
         public override Query GetNextQuery()
         {
             return new PodQuery(this.Namespace, (Pod)this.SelectedChoice.Item);

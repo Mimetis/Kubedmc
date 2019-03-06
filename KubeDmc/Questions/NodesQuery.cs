@@ -8,13 +8,15 @@ namespace KubeDmc.Questions
 {
     public class NodesQuery : Query
     {
-        public override string Title => "Nodes";
 
-        public NodesQuery()
+        public NodesQuery() : base("Nodes")
+        {
+        }
+
+        public override void RefreshItems()
         {
             this.Items = KubService.Current.GetNodes();
         }
-
 
         public override Query GetNextQuery()
         {

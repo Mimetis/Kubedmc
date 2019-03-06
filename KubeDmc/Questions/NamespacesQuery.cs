@@ -5,10 +5,12 @@ namespace KubeDmc.Questions
 {
     public class NamespacesQuery : Query
     {
+        public NamespacesQuery() : base("Namespaces")
+        {
+        }
 
-        public override string Title => "Namespaces";
 
-        public NamespacesQuery()
+        public override void RefreshItems()
         {
             this.Items = KubService.Current.GetNamespaces();
         }

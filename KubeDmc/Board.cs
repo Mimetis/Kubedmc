@@ -3,8 +3,10 @@ using KubeDmc.Questions;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
+using System.Timers;
 
 namespace KubeDmc
 {
@@ -15,10 +17,71 @@ namespace KubeDmc
         private int topPosition = 0;
         private bool cursorVisibility;
         private Query currentQuery;
+        //private Timer refreshTimer = null;
+        private System.Timers.Timer refresherTimer;
+        private ElapsedEventHandler elapsedEventHandler = null;
+        private bool isPaused = false;
+        private bool isRefreshing = false;
 
         public Board()
         {
             Console.CancelKeyPress += (s, e) => Exit();
+            this.refresherTimer = new System.Timers.Timer(1000);
+        }
+
+        public void DisableTimerForQuery()
+        {
+            if (this.elapsedEventHandler != null)
+                this.refresherTimer.Elapsed -= elapsedEventHandler;
+
+            if (this.refresherTimer.Enabled == true)
+                this.refresherTimer.Stop();
+
+            this.isPaused = false;
+            this.isRefreshing = false;
+        }
+
+        public void PauseTimerForQuery()
+        {
+            if (this.refresherTimer.Enabled)
+            {
+                this.isPaused = true;
+                this.refresherTimer.Stop();
+            }
+
+        }
+
+        public void UnpauseTimerForQuery()
+        {
+            if (!this.refresherTimer.Enabled && isPaused)
+            {
+                this.isPaused = false;
+                this.refresherTimer.Start();
+            }
+
+        }
+
+
+        public void EnableTimeForQuery()
+        {
+            elapsedEventHandler = new ElapsedEventHandler((__, eea) =>
+            {
+                this.isRefreshing = true;
+                Debug.WriteLine(this.currentQuery.Title + " is refreshed.");
+
+                // Refresh
+                this.currentQuery.Refresh();
+
+                // Write root question and choices
+                this.WriteQuery();
+
+                this.isRefreshing = false;
+
+            });
+
+            this.refresherTimer.Elapsed += elapsedEventHandler;
+            this.refresherTimer.Start();
+
         }
 
 
@@ -44,11 +107,10 @@ namespace KubeDmc
             // first query
             this.queriesStack.Push(firstQuery);
 
-            bool end = false;
+            bool isEnd = false;
             Console.CursorLeft = 0;
 
-
-            while (!end)
+            while (!isEnd)
             {
                 if (this.queriesStack.Count == 0)
                     break;
@@ -62,28 +124,50 @@ namespace KubeDmc
                 // Write root question and choices
                 this.WriteQuery();
 
+                if (this.isPaused && this.currentQuery.IsRefreshedEnabled)
+                    this.UnpauseTimerForQuery();
+                else if (this.currentQuery.IsRefreshedEnabled)
+                    this.EnableTimeForQuery();
+                else
+                    this.DisableTimerForQuery();
+
                 // Wait until a choice is been made
                 Query next = null;
 
                 // user wants to back in the stack
                 var isBack = false;
+                var isRoot = false;
+                var isRefresh = false;
 
-                while (next == null && !end && !isBack)
+                while (next == null && !isEnd && !isBack && !isRefresh)
                 {
-                    var keyInfo = this.ReadChoice();
+                    this.ReadChoice();
 
                     // Handle response
                     // Get if we have to continue or if we go to next query (then go to next line)
-                    (end, isBack, next) = this.HandleAnswer();
+                    (isEnd, isBack, isRoot, isRefresh, next) = this.HandleAnswer();
                 }
 
                 // clean current query, if it's a back, so clean the title too
-                CleanQuery(isBack);
+                this.CleanQuery(isBack);
 
+                // if refresh, we stay on the same query
+                if (isRefresh)
+                {
+                    next = this.currentQuery;
+                    // push the next query
+                    next.Refresh();
+                }
                 // if isBack, remove the query from the stack
-                if (isBack || next == null)
+                else if (isBack)
                 {
                     this.queriesStack.Pop();
+                }
+                else if (isRoot)
+                {
+                    while (this.queriesStack.Count > 1)
+                        this.queriesStack.Pop();
+
                 }
                 else
                 {
@@ -100,6 +184,7 @@ namespace KubeDmc
             Exit();
 
         }
+
 
         private void Exit()
         {
@@ -135,12 +220,20 @@ namespace KubeDmc
                 // Don't display the character on Console
                 keyInfo = Console.ReadKey(true);
 
+                // do nothing until refreshing is ended
+                if (this.isRefreshing)
+                    continue;
+
+                // disable timer during this phase
+                this.PauseTimerForQuery();
+
                 if (keyInfo.Key == ConsoleKey.UpArrow && inProgressChoiceIndex > 0)
                 {
                     this.WriteQueryLine(this.currentQuery.InProgressChoice, false, this.currentQuery.InProgressChoice.TopPosition);
                     inProgressChoiceIndex--;
                     this.currentQuery.InProgressChoice = this.currentQuery.QueryLines[inProgressChoiceIndex];
                     this.WriteQueryLine(this.currentQuery.InProgressChoice, true, this.currentQuery.InProgressChoice.TopPosition);
+                    this.UnpauseTimerForQuery();
                 }
                 if (keyInfo.Key == ConsoleKey.DownArrow && inProgressChoiceIndex < this.currentQuery.QueryLines.Count - 1)
                 {
@@ -148,6 +241,7 @@ namespace KubeDmc
                     inProgressChoiceIndex++;
                     this.currentQuery.InProgressChoice = this.currentQuery.QueryLines[inProgressChoiceIndex];
                     this.WriteQueryLine(this.currentQuery.InProgressChoice, true, this.currentQuery.InProgressChoice.TopPosition);
+                    this.UnpauseTimerForQuery();
                 }
                 if ((int)keyInfo.Key >= 65 && (int)keyInfo.Key <= 90)
                 {
@@ -159,14 +253,14 @@ namespace KubeDmc
                         this.WriteQueryLine(this.currentQuery.InProgressChoice, true, this.currentQuery.InProgressChoice.TopPosition);
                         this.currentQuery.SelectedChoice = this.currentQuery.InProgressChoice;
                         isSelected = true;
-                        // Just to see the line selected !
-                        //Thread.Sleep(200);
+                        this.DisableTimerForQuery();
                     }
 
                 }
                 if (keyInfo.Key == ConsoleKey.Enter)
                 {
                     this.currentQuery.SelectedChoice = this.currentQuery.InProgressChoice;
+                    this.DisableTimerForQuery();
                     isSelected = true;
                 }
                 if (keyInfo.Key == ConsoleKey.Escape)
@@ -174,6 +268,7 @@ namespace KubeDmc
                     this.currentQuery.SelectedChoice = this.currentQuery.QueryLines.FirstOrDefault(c => c.ChoiceType == QueryLineType.Back);
                     if (this.currentQuery.SelectedChoice == null)
                         this.currentQuery.SelectedChoice = this.currentQuery.QueryLines.FirstOrDefault(c => c.ChoiceType == QueryLineType.Exit);
+                    this.DisableTimerForQuery();
 
                 }
 
@@ -182,23 +277,27 @@ namespace KubeDmc
             return keyInfo;
         }
 
-        public (bool isEnd, bool isBack, Query nextStep) HandleAnswer()
+        public (bool isEnd, bool isBack, bool isRoot, bool isRefresh, Query nextStep) HandleAnswer()
         {
             switch (this.currentQuery.SelectedChoice.ChoiceType)
             {
                 case QueryLineType.Choice:
                     this.WriteAnswer();
-                    return (false, false, this.currentQuery.GetNextQuery());
+                    var nextQuery = this.currentQuery.GetNextQuery();
+                    bool isRefresh = nextQuery == null;
+                    return (false, false, false, isRefresh, nextQuery);
                 case QueryLineType.Back:
-                    return (false, true, null);
+                    return (false, true, false, false, null);
                 case QueryLineType.Exit:
-                    return (true, true, null);
+                    return (true, true, false, false, null);
+                case QueryLineType.Root:
+                    return (false, false, true, false, null);
                 case QueryLineType.Input:
-                    return (false, true, null);
+                    return (false, true, false, false, null);
                 case QueryLineType.None:
                 case QueryLineType.Title:
                 default:
-                    return (false, true, null);
+                    return (false, true, false, false, null);
             }
         }
 
@@ -284,6 +383,12 @@ namespace KubeDmc
 
             }
 
+            var root = this.currentQuery.QueryLines.Where(c => c.ChoiceType == QueryLineType.Root).FirstOrDefault();
+            if (root != null)
+            {
+                this.WriteLine();
+                this.WriteQueryLine(root, false);
+            }
 
             var back = this.currentQuery.QueryLines.Where(c => c.ChoiceType == QueryLineType.Back).FirstOrDefault();
             if (back != null)
@@ -303,7 +408,7 @@ namespace KubeDmc
             this.currentQuery.BottomPosition = Console.CursorTop;
 
             // Select first choice
-            QueryLine inProgressChoice = this.currentQuery.InProgressChoice;
+            var inProgressChoice = this.currentQuery.InProgressChoice;
 
             if (inProgressChoice == null)
             {
@@ -373,13 +478,13 @@ namespace KubeDmc
             switch (choice.ChoiceType)
             {
                 case QueryLineType.Choice:
-                    return ("> ", ConsoleColor.DarkBlue);
+                    return ("> ", ConsoleColor.Green);
                 case QueryLineType.Back:
                     return ("< ", ConsoleColor.Red);
                 case QueryLineType.Exit:
                     return ("< ", ConsoleColor.Red);
                 case QueryLineType.Input:
-                    return ("* ", ConsoleColor.DarkBlue);
+                    return ("* ", ConsoleColor.Green);
                 case QueryLineType.Title:
                     return ("  ", initialForegroundColor);
                 case QueryLineType.PlainText:
@@ -392,7 +497,7 @@ namespace KubeDmc
         /// <summary>
         /// Clean a full query, including or not, the first line
         /// </summary>
-        private void CleanQuery( bool includeTitle)
+        private void CleanQuery(bool includeTitle)
         {
             // Remember cursor position before cleaning
             (int _top, int _left) = (Console.CursorTop, Console.CursorLeft);

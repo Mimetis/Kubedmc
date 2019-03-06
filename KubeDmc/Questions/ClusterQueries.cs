@@ -7,11 +7,9 @@ namespace KubeDmc.Questions
     public class ClusterQueries : Query
     {
 
-        public ClusterQueries()
+        public ClusterQueries() : base("Choose a ressource")
         {
         }
-
-        public override string Title => "Choose a ressource";
 
         public override void CreateChoices()
         {
@@ -37,25 +35,12 @@ namespace KubeDmc.Questions
             {
                 ChoiceType = QueryLineType.Choice,
                 Question = this,
-                Text = $"Cluster Info",
-                Title = "Cluster info",
-                Kind = "clusterinfo",
+                Text = $"Get Cluster config",
+                Title = "Cluster config",
+                Kind = "clusterconfig",
                 HotkeyIndex = 8
             });
-            this.QueryLines.Add(new QueryLine
-            {
-                ChoiceType = QueryLineType.Choice,
-                Question = this,
-                Text = $"Current Config",
-                Title = "Current config",
-                Kind = "currentcontext",
-                HotkeyIndex = 8
-            });
-
         }
-
-
-
 
         public override Query GetNextQuery()
         {
@@ -65,10 +50,8 @@ namespace KubeDmc.Questions
                     return new NamespacesQuery();
                 case "node":
                     return new NodesQuery();
-                case "clusterinfo":
-                    return new ProcessQuery("Cluster info", $"cluster-info", this);
-                case "currentcontext":
-                    return new ProcessQuery("Current config", $"config current-context", this);
+                case "clusterconfig":
+                    return new ContextQueries();
                 default:
                     return null;
             }

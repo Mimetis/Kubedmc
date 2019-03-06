@@ -10,14 +10,15 @@ namespace KubeDmc.Questions
     {
         public string Namespace { get; set; }
 
-        public ServicesQuery(string ns)
+        public ServicesQuery(string ns) : base("Choose a ressource")
         {
             this.Namespace = ns;
-            this.Items = KubService.Current.GetServices(this.Namespace);
 
         }
-        public override string Title => "Choose a ressource";
-
+        public override void RefreshItems()
+        {
+            this.Items = KubService.Current.GetServices(this.Namespace);
+        }
         public override Query GetNextQuery()
         {
             return new ServiceQuery(this.Namespace, (Service)this.SelectedChoice.Item);

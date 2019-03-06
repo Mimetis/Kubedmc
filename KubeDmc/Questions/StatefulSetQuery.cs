@@ -10,9 +10,8 @@ namespace KubeDmc.Questions
         private readonly string ns;
 
         public StatefulSet StatefulSet{ get; }
-        public override string Title => "Choose an action";
 
-        public StatefulSetQuery(string ns, StatefulSet sts)
+        public StatefulSetQuery(string ns, StatefulSet sts) : base("Choose an action")
         {
             this.ns = ns;
             this.StatefulSet = sts;

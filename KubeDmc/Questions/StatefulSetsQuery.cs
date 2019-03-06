@@ -9,14 +9,15 @@ namespace KubeDmc.Questions
     {
 
         public string Namespace { get; set; }
-        public override string Title => "StatefulSets";
 
-        public StatefulSetsQuery(string ns)
+        public StatefulSetsQuery(string ns)  : base("StatefulSets")
         {
             this.Namespace = ns;
+        }
+        public override void RefreshItems()
+        {
             this.Items = KubService.Current.GetStatefulSets(this.Namespace);
         }
-
 
         public override Query GetNextQuery()
         {

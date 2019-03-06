@@ -4,12 +4,10 @@ namespace KubeDmc.Questions
 {
     public class DeploymentQuery : Query
     {
-        public override string Title => "Choose a ressource";
-
         public string Namespace { get; set; }
         public Deployment Deployment { get; }
 
-        public DeploymentQuery(string ns, Deployment deployment)
+        public DeploymentQuery(string ns, Deployment deployment) : base("Choose a ressource")
         {
             this.Namespace = ns;
             this.Deployment = deployment;

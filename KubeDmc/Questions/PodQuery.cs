@@ -7,9 +7,8 @@ namespace KubeDmc.Questions
         private readonly string ns;
 
         public Pod pod { get; }
-        public override string Title => "Choose an action";
 
-        public PodQuery(string ns, Pod pod)
+        public PodQuery(string ns, Pod pod) : base("Choose an action")
         {
             this.ns = ns;
             this.pod = pod;

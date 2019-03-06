@@ -10,15 +10,15 @@ namespace KubeDmc.Questions
         public string Namespace { get; set; }
         public List<Deployment> Deployments { get; }
 
-        public override string Title => "Deployments";
-
-        public DeploymentsQuery(string ns)
+        public DeploymentsQuery(string ns) : base("Deployments")
         {
             this.Namespace = ns;
-            this.Items = KubService.Current.GetDeployments(this.Namespace);
         }
 
-
+        public override void RefreshItems()
+        {
+             this.Items = KubService.Current.GetDeployments(this.Namespace);
+       }
 
         public override Query GetNextQuery()
         {

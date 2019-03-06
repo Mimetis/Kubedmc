@@ -6,10 +6,10 @@ namespace KubeDmc.Kub
     {
 
         [Item("NAME", 1)]
-        public string Name { get; set; }
+        public virtual string Name { get; set; }
 
         [Item("AGE", 100)]
-        public string Age
+        public virtual string Age
         {
             get
             {
@@ -35,7 +35,7 @@ namespace KubeDmc.Kub
         }
 
 
-        public DateTime? StartDateTime { get; set; }
+        public virtual DateTime? StartDateTime { get; set; }
 
     }
 }

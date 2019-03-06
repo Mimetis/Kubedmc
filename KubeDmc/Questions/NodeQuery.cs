@@ -7,9 +7,8 @@ namespace KubeDmc.Questions
     public class NodeQuery : Query
     {
         public Node Node { get; }
-        public override string Title => "Choose a ressource";
 
-        public NodeQuery(Node node)
+        public NodeQuery(Node node) : base("Choose a ressource")
         {
             this.Node = node;
         }

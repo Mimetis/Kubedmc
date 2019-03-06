@@ -10,9 +10,8 @@ namespace KubeDmc.Questions
         private readonly string ns;
 
         public Service Service{ get; }
-        public override string Title => "Choose an action";
 
-        public ServiceQuery(string ns, Service s)
+        public ServiceQuery(string ns, Service s) : base("Choose an action")
         {
             this.ns = ns;
             this.Service = s;

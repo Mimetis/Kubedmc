@@ -7,16 +7,14 @@ namespace KubeDmc.Questions
     public class ProcessQuery : Query
     {
         public ProcessQuery(string ressource, string arguments, Query backQuery, bool redirectStandardOutput = true) 
+            : base($"Describe {ressource}")
         {
-            this.ressource = ressource;
             this.Arguments = arguments;
             this.BackQuery = backQuery;
             this.redirectStandardOutput = redirectStandardOutput;
         }
 
-        public override string Title => $"Describe {this.ressource}";
 
-        private string ressource;
         private readonly bool redirectStandardOutput;
 
         public string Arguments { get; }

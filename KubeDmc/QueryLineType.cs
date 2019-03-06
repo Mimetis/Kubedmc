@@ -12,6 +12,7 @@ namespace KubeDmc
         Input,
         Title,
         None,
-        PlainText
+        PlainText,
+        Root
     }
 }

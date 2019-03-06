@@ -3,8 +3,10 @@ using k8s.Models;
 using KubeDmc.Kub;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 
 namespace KubeDmc
 {
@@ -14,7 +16,12 @@ namespace KubeDmc
 
         private const string ServiceAccountTokenKeyFilePath = "/var/run/secrets/kubernetes.io/serviceaccount/token";
 
-    
+        private static readonly string KubeConfigDefaultLocation =
+            RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+        ? Path.Combine(Environment.GetEnvironmentVariable("USERPROFILE"), @".kube\config")
+        : Path.Combine(Environment.GetEnvironmentVariable("HOME"), ".kube/config");
+
+
 
         private KubService()
         {
@@ -36,10 +43,32 @@ namespace KubeDmc
         }
 
 
+        public List<Context> GetAllContexts()
+        {
+            var k8SConfig = KubernetesClientConfiguration.LoadKubeConfig();
+            var contexts = new List<Context>();
+            foreach (var c in k8SConfig.Contexts)
+            {
+                var context = new Context
+                {
+                    Cluster = c.ContextDetails.Cluster,
+                    Name = c.Name,
+                    Namespace = string.IsNullOrEmpty(c.Namespace) ? "" : c.Namespace,
+                    User = c.ContextDetails.User,
+                    Current = c.ContextDetails.Cluster == k8SConfig.CurrentContext ? "*" : ""
+                };
+
+                contexts.Add(context);
+            }
+
+            return contexts;
+        }
+
         public bool TryToConnect()
         {
             try
             {
+
                 KubernetesClientConfiguration config = null;
 
                 var host = Environment.GetEnvironmentVariable("KUBERNETES_SERVICE_HOST");
@@ -55,6 +84,8 @@ namespace KubeDmc
                 {
                     config = KubernetesClientConfiguration.InClusterConfig();
                 }
+
+
 
                 this.Kub = new Kubernetes(config);
                 return true;
@@ -86,7 +117,7 @@ namespace KubeDmc
             return false;
         }
 
-        public IList<Namespace> GetNamespaces()
+        public List<Namespace> GetNamespaces()
         {
             var namespaces = new List<Namespace>();
             var ns = this.Kub.ListNamespace().Items;
@@ -103,7 +134,7 @@ namespace KubeDmc
             return namespaces;
         }
 
-        internal IList<Node> GetNodes()
+        internal List<Node> GetNodes()
         {
             var nodeList = this.Kub.ListNode().Items;
             var nodes = new List<Node>();
@@ -124,7 +155,7 @@ namespace KubeDmc
         }
 
 
-        public IList<V1LoadBalancerIngress> GetLoadBalancers()
+        public List<V1LoadBalancerIngress> GetLoadBalancers()
         {
             var loadBalancerService = KubService.Current.Kub.ListServiceForAllNamespaces()
                .Items
@@ -133,6 +164,7 @@ namespace KubeDmc
             return loadBalancerService.SelectMany(service => service.Status?.LoadBalancer?.Ingress).ToList();
 
         }
+
 
 
         public List<Deployment> GetDeployments(string ns)
@@ -175,14 +207,14 @@ namespace KubeDmc
         }
 
 
-        internal IList<Service> GetServices(string ns)
+        internal List<Service> GetServices(string ns)
         {
             var list = this.Kub.ListNamespacedService(ns).Items;
             var services = new List<Service>();
 
-            foreach(var item in list)
+            foreach (var item in list)
             {
-                
+
                 services.Add(new Service
                 {
                     Name = item.Metadata.Name,
@@ -198,20 +230,25 @@ namespace KubeDmc
         }
 
 
-        public IList<Pod> GetPods(string ns)
+        public List<Pod> GetPods(string ns)
         {
             var list = this.Kub.ListNamespacedPod(ns);
 
-            var pods = list?.Items?.Select(pod => new Pod
+            var pods = list?.Items?.Select(pod =>
             {
-                Name = pod.Metadata.Name,
-                Status = pod.Status.Phase,
-                StartDateTime = pod.Status.StartTime,
-                ContainersReadyCount = pod.Status.ContainerStatuses.Count(cstatus => cstatus.Ready),
-                ContainersCount = pod.Status.ContainerStatuses.Count,
-                ContainerRestarts = pod.Status.ContainerStatuses.Sum(cstatus => cstatus.RestartCount)
-            }
-            ).ToList();
+                var p = new Pod();
+                p.Name = pod.Metadata?.Name;
+                p.Status = pod.Status?.Phase;
+                p.StartDateTime = pod.Status?.StartTime;
+                p.ContainersReadyCount = pod.Status?.ContainerStatuses == null ? 0 : pod.Status.ContainerStatuses.Count(cstatus => cstatus.Ready);
+                p.ContainersCount = pod.Status?.ContainerStatuses == null ? 0 : pod.Status.ContainerStatuses.Count;
+                p.ContainerRestarts = pod.Status?.ContainerStatuses == null ? 0 : pod.Status.ContainerStatuses.Sum(cstatus => cstatus.RestartCount);
+
+                Debug.WriteLine(p.Name + ": " + p.Status + " - " + p.StartDateTime);
+
+                return p;
+
+            }).ToList();
 
             return pods;
         }

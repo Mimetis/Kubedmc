@@ -8,9 +8,6 @@ namespace KubeDmc
         static void Main(string[] args)
         {
 
-            // https://www.mankier.com/1/kubectl-cluster-info
-
-
 
             new Board().Execute();
 
